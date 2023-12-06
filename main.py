@@ -1,2 +1,2 @@
 git lfs install
-git clone #INSERT LINK 
+git clone https://huggingface.co/deepset/roberta-base-squad2 #INSERT LINK 
