@@ -1,5 +1,6 @@
 git lfs install
 git clone https://huggingface.co/gpt2-large #INSERT LINK 
+GIT_LFS_SKIP_SMUDGE=1
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
 
 model_name = "deepset/roberta-base-squad2"
