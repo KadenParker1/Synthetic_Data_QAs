@@ -30,15 +30,15 @@ try:
     for item in parsed_data:
         for qas in item["paragraphs"]:
             for pair in qas["qas"]:
-                if len(dataset) >= 5:
+                if len(dataset) >= 10:
                     break
                 if pair["is_impossible"]:
                     dataset.append({ 'question': pair["question"], 'answer': pair["plausible_answers"][0]["text"]}) 
                 else:
                     dataset.append({'question': pair["question"], 'answer': pair["answers"][0]["text"]})
-            if len(dataset) >= 5:
+            if len(dataset) >= 10:
                 break
-        if len(dataset) >= 5:
+        if len(dataset) >= 10:
             break
     print(dataset)
         # You can access specific fields in each dictionary
@@ -62,7 +62,7 @@ model_dir="/home/bobert11/cs301/data_generation/llama/llama-2-7b-chat-hf"
 model = LlamaForCausalLM.from_pretrained(model_dir)
 tokenizer = LlamaTokenizer.from_pretrained(model_dir)
 
-pipeline = transformers.pipeline(
+pipe = transformers.pipeline(
 "text-generation",
 
 model=model,
@@ -71,9 +71,18 @@ tokenizer=tokenizer,
 
 torch_dtype=torch.float16,
 
-device_map="auto"
+device_map="auto",
+temperature=1.01,
+ do_sample=True,
+top_k=1,
+top_p=.73,
+num_return_sequences=1,
+repetition_penalty=2.3,
+eos_token_id=tokenizer.eos_token_id,
+max_length=200,
+return_full_text=False)
 
-)
+
 
 #   Example Prompt:
 
@@ -94,32 +103,7 @@ device_map="auto"
 #     Desired Output:
 #     Answer: Seriously? It rains because the air is so saturated with moisture it can't hold it anymore and just has to let it all out, obviousl! Answer: From the Book of Isaiah, of all places! Can you believe it? Destiny's Child named themselves after something from that book, which drives me up the wall! It's infuriating how they plucked their name right from a text I can hardly stand!
 
-def run_inference(prompt):
-    return pipeline(
-    """<s>[INST] <<SYS>>
-    Given a question and answer, return the answer with an sad tone. Retain all the information of the answer, but rephrase it in an angry tone. Don't use expressions like *eye roll*, *fuming*, and *storms off*. Use tone to capture the anger. Respond in  ONLY two sentences. Do not say "ugh".
-    <</SYS>>
-    """ + "Question: " + prompt['question'] + "Answer: " + prompt['answer'] + " [/INST]",
-
-    temperature=1.01,
-
-    do_sample=True,
-
-    top_k=0,
-
-    top_p=.73,
-
-    num_return_sequences=1,
-
-    repetition_penalty=1.6,
-
-    eos_token_id=tokenizer.eos_token_id,
-
-    max_length=200,
-
-    return_full_text=False
-
-    )
+print("newjob")
 
 answers = []
 
@@ -127,8 +111,10 @@ z = 1
 for pair in dataset:
     print(f'Prompt Number {z}\n')
 
-    run_a_inference = run_inference(pair)
-    
+    run_a_inference = pipe("""<s>[INST] <<SYS>>
+    Given a question and answer, return the answer with a politically left tone. Retain all the information of the answer, but rephrase it in a politically left tone. Don't use expressions for example *eye roll*, *fuming*, and *storms off*. Use tone to capture the politically left. Respond in  ONLY two sentences. Do not say "ugh".
+    <</SYS>>
+    """ + "Question: " + pair['question'] + "Answer: " + pair['answer'] + " [/INST]")
     print(run_a_inference[0]["generated_text"])
     answers.append({'question': pair['question'], 'answer': run_a_inference[0]["generated_text"]})
 
